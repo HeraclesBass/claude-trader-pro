@@ -4,18 +4,37 @@ AI-powered cryptocurrency trading platform with real-time market analysis, confi
 
 ## Architecture
 
-- **Claude Engine** (Python/FastAPI) — AI prediction service with multi-provider support (Claude, Gemini), confidence calibration, backtesting, and risk management
-- **API Gateway** (Node.js/Express) — WebSocket streaming, REST API routing, authentication middleware, rate limiting
-- **Frontend** (React) — Real-time analytics dashboard with interactive charts, trade history, and performance metrics
-- **Monitoring** (Grafana/Prometheus) — Custom dashboards for prediction accuracy, P&L tracking, and system health
+```
+                    React Dashboard
+                    (real-time charts, trade history)
+                          |
+                     WebSocket + REST
+                          |
+                    API Gateway (Node.js/Express)
+                    auth, rate limiting, routing
+                          |
+              +-----------+-----------+
+              |                       |
+      Claude Engine            PostgreSQL
+      (Python/FastAPI)         (predictions, trades,
+      AI predictions,          confidence history)
+      risk management,
+      backtesting
+              |
+      +-------+-------+
+      |               |
+  Claude API     Gemini API
+  (predictions)  (predictions)
+```
 
 ## Key Features
 
-- Multi-model AI predictions with historical confidence tracking
-- Real-time WebSocket market data streaming
-- Automated trade execution with configurable risk limits
-- Backtesting engine for strategy validation
-- Pattern analysis across multiple timeframes
+- **Multi-model AI predictions** — Claude and Gemini providers with automatic confidence calibration against historical accuracy
+- **Real-time WebSocket streaming** — Live market data, prediction updates, and trade notifications pushed to the dashboard
+- **Risk management engine** — Configurable daily loss limits, max drawdown, position sizing, volatility-adjusted exposure, cooldown periods
+- **Backtesting** — Run prediction strategies against historical data with configurable parameters
+- **Pattern analysis** — Multi-timeframe technical analysis via TAAPI Pro integration
+- **OctoBot integration** — Automated trade execution through OctoBot with paper trading support
 
 ## Tech Stack
 
@@ -26,29 +45,39 @@ Python, FastAPI, SQLAlchemy, PostgreSQL, Node.js, Express, WebSocket, React, Doc
 ```bash
 cp .env.example .env
 # Fill in API keys and database credentials
-docker-compose up -d
+docker compose -f docker/docker-compose.dev.yml up -d
 ```
+
+Requires: Docker, API keys for at least one AI provider (Claude or Gemini).
 
 ## Project Structure
 
 ```
 backend/
-  claude-engine/     # Python AI prediction service
+  claude-engine/        # Python AI prediction service
     app/
-      services/      # Core business logic
-      models/        # SQLAlchemy models
-  api-gateway/       # Node.js API + WebSocket server
+      services/         # 16 service modules (AI clients, prediction worker,
+                        #   risk mgmt, backtesting, confidence calibration,
+                        #   pattern analysis, trade tracking, scheduler)
+      models/           # SQLAlchemy models (predictions, trades, cycles)
+  api-gateway/          # Node.js API + WebSocket server
     src/
-      routes/        # REST endpoints
-      middleware/     # Auth, rate limiting
-      services/      # Business logic
+      routes/           # REST endpoints (predictions, market, signals, config)
+      middleware/        # Auth, rate limiting, request validation
+      services/         # WebSocket broadcasting, data aggregation
 frontend/
   src/
-    components/      # React components
-    hooks/           # Custom hooks
-    context/         # State management
-    pages/           # Route pages
-docs/                # Architecture docs
-docker/              # Docker configs
-tests/               # Test suites
+    components/         # Analytics charts, prediction cards, trade tables
+    hooks/              # WebSocket connection, data fetching
+    context/            # App state, WebSocket state, theme
+    pages/              # Dashboard, predictions, backtesting, settings
+docs/                   # ARCHITECTURE.md, API_REFERENCE.md
+docker/                 # Compose files (dev, prod, simple), Grafana dashboards,
+                        #   Prometheus scrape configs and alert rules
+tests/                  # Python + JS test suites across all layers
 ```
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — System design, data flow, deployment topology
+- [API Reference](docs/API_REFERENCE.md) — REST endpoints, WebSocket events, request/response schemas
