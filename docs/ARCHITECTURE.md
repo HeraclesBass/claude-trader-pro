@@ -680,7 +680,7 @@ sudo cp -r dist/* /var/www/trade.herakles.dev/
 ```bash
 # .env (production)
 NODE_ENV=production
-ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
 DATABASE_URL=postgresql://hercules:your-password-here@postgres:5432/hercules_db
 CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
 ```
