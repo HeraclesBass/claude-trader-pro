@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Frontend with Hot Reload (Vite HMR)
+  claude-trader-frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: claude-trader-frontend-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8100/api
+      - VITE_WS_URL=ws://localhost:8100
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - claude-trader-dev
+
+  # API Gateway with Hot Reload (nodemon)
+  claude-trader-api-gateway-dev:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: claude-trader-api-gateway-dev
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./backend/api-gateway/src:/app/src:ro
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=8100
+      - CLAUDE_ENGINE_URL=http://claude-trader-engine-dev:8108
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=hercules_db
+      - POSTGRES_USER=hercules
+      - POSTGRES_PASSWORD=your-postgres-password-here
+    command: npm run dev
+    depends_on:
+      - claude-trader-engine-dev
+    networks:
+      - claude-trader-dev
+      - hercules-platform_default
+
+  # Claude Engine with Hot Reload (uvicorn --reload)
+  claude-trader-engine-dev:
+    build:
+      context: ./backend/claude-engine
+      dockerfile: Dockerfile.dev
+    container_name: claude-trader-engine-dev
+    ports:
+      - "8108:8108"
+    volumes:
+      - ./backend/claude-engine/app:/app/app:ro
+      - /home/user/OctoBot/external-data-sources:/app/external_data_sources:ro
+      - /home/user/OctoBot/tentacles/Evaluator/TA/claude_evaluator:/app/claude_evaluator:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - TAAPI_API_KEY=${TAAPI_API_KEY}
+      - DATABASE_URL=postgresql://hercules:your-postgres-password-here@postgres:5432/hercules_db
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8108 --reload
+    networks:
+      - claude-trader-dev
+      - hercules-platform_default
+
+networks:
+  claude-trader-dev:
+    driver: bridge
+  hercules-platform_default:
+    external: true
+

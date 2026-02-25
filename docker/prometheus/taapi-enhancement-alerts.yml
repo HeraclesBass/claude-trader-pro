@@ -1,0 +1,376 @@
+groups:
+  - name: taapi_enhancement_alerts
+    interval: 30s
+    rules:
+      # ========================================================================
+      # PREDICTION ACCURACY ALERTS
+      # ========================================================================
+      
+      - alert: PredictionAccuracyDrop
+        expr: claude_prediction_accuracy{symbol="all", alignment_type="all"} < 0.80
+        for: 1h
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: ml_performance
+          priority: P2
+        annotations:
+          summary: "Prediction accuracy dropped below target"
+          description: "Current accuracy: {{ $value | humanizePercentage }} (target: 85%)"
+          impact: "User trust degraded, trading decisions less reliable"
+          runbook: |
+            1. Check recent predictions: /home/user/scripts/observability-cli/query-logs.sh claude-trader-engine "Prediction validated" --since 1h
+            2. Verify TAAPI Pro data quality: curl localhost:8108/api/v1/health
+            3. Review confidence calibration metrics
+            4. Check for market regime changes (high volatility, news events)
+            5. If <70% for >2h, consider disabling predictions
+      
+      - alert: PredictionAccuracyCritical
+        expr: claude_prediction_accuracy{symbol="all", alignment_type="all"} < 0.70
+        for: 30m
+        labels:
+          severity: critical
+          service: claude-trader-engine
+          category: ml_performance
+          priority: P1
+        annotations:
+          summary: "CRITICAL: Prediction accuracy critically low"
+          description: "Current accuracy: {{ $value | humanizePercentage }} (critical threshold: 70%)"
+          impact: "System producing unreliable predictions - immediate action required"
+          runbook: |
+            IMMEDIATE ACTIONS:
+            1. Page on-call engineer
+            2. Consider emergency rollback: cd /home/user/claude-trader-pro && ./rollback.sh
+            3. Investigate root cause:
+               - TAAPI Pro API issues?
+               - Model degradation?
+               - Data quality problems?
+            4. Disable predictions if accuracy remains <70% for >1h
+      
+      - alert: HighAlignmentAccuracyButLowOverall
+        expr: |
+          (claude_prediction_accuracy{alignment_type="fully_aligned"} > 0.85)
+          and
+          (claude_prediction_accuracy{alignment_type="all"} < 0.80)
+        for: 2h
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: ml_performance
+          priority: P3
+        annotations:
+          summary: "Fully-aligned predictions accurate, but overall accuracy low"
+          description: "Fully aligned: {{ $value | humanizePercentage }}, Overall: {{ $value | humanizePercentage }}"
+          impact: "Suggests partial/conflicting timeframes are reducing accuracy"
+          runbook: |
+            1. Review timeframe conflict rate
+            2. Consider adjusting confidence thresholds for partial alignment
+            3. Analyze market conditions causing conflicts
+            4. May need to recalibrate multi-timeframe weighting
+      
+      # ========================================================================
+      # CONFIDENCE CALIBRATION ALERTS
+      # ========================================================================
+      
+      - alert: ConfidenceMiscalibration
+        expr: claude_confidence_calibration_error > 0.10
+        for: 6h
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: ml_quality
+          priority: P2
+        annotations:
+          summary: "Confidence calibration error high for bucket {{ $labels.confidence_bucket }}"
+          description: "Calibration error: {{ $value | humanize }} (threshold: 0.10)"
+          impact: "Confidence scores not reflecting actual accuracy"
+          runbook: |
+            1. Review confidence calibration: curl localhost:8108/api/v1/metrics/calibration
+            2. Check if specific confidence buckets are miscalibrated
+            3. Collect 300+ validated predictions for recalibration
+            4. Run confidence recalibration script (task-07 in session spec)
+            5. Update MultiTimeframeAnalysis._calculate_alignment() weights
+      
+      - alert: OverconfidentPredictions
+        expr: |
+          (avg(claude_prediction_confidence{confidence_bucket="0.85-1.00"}) - avg(claude_prediction_accuracy{confidence_bucket="0.85-1.00"})) > 0.15
+        for: 12h
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: ml_quality
+          priority: P2
+        annotations:
+          summary: "System is overconfident (predicted confidence > actual accuracy)"
+          description: "High-confidence predictions underperforming expectations"
+          impact: "Users receiving false sense of certainty"
+          runbook: |
+            1. Lower confidence multiplier in _calculate_alignment()
+            2. Add penalty for conflicting signals
+            3. Increase weight on validation history
+            4. Consider A/B testing confidence adjustments
+      
+      # ========================================================================
+      # TAAPI PRO API PERFORMANCE ALERTS
+      # ========================================================================
+      
+      - alert: TaapiHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(taapi_api_latency_seconds_bucket[5m])
+          ) > 8.0
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: api_performance
+          priority: P2
+        annotations:
+          summary: "TAAPI Pro API latency high"
+          description: "p95 latency: {{ $value | humanizeDuration }} (threshold: 8s)"
+          impact: "Slow predictions, poor user experience"
+          runbook: |
+            1. Check TAAPI Pro status: https://status.taapi.io
+            2. Review network connectivity: ping api.taapi.io
+            3. Check bulk endpoint performance (should be faster than individual)
+            4. Consider increasing cache TTL from 30s to 60s
+            5. If persistent, enable fallback or implement circuit breaker
+      
+      - alert: TaapiHighErrorRate
+        expr: |
+          sum(rate(taapi_api_calls_total{status!="success"}[5m]))
+          /
+          sum(rate(taapi_api_calls_total[5m]))
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: api_reliability
+          priority: P2
+        annotations:
+          summary: "TAAPI Pro API error rate high"
+          description: "Error rate: {{ $value | humanizePercentage }} (threshold: 5%)"
+          impact: "Increased fallback usage, potential prediction degradation"
+          runbook: |
+            1. Check error types: grep "TAAPI.*error" /var/log/claude-engine.log | tail -50
+            2. Verify API key valid: check TAAPI_API_KEY in .env
+            3. Check rate limits (see rate_limit alerts below)
+            4. Review TAAPI Pro account status and billing
+            5. If errors persist >30min, investigate API outage
+      
+      - alert: TaapiRateLimitApproaching
+        expr: taapi_rate_limit_remaining{limit_type="per_minute"} < 100
+        for: 1m
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: rate_limiting
+          priority: P3
+        annotations:
+          summary: "TAAPI Pro per-minute rate limit approaching"
+          description: "Remaining calls: {{ $value }} (threshold: 100/2400)"
+          impact: "May hit rate limit soon, predictions will use fallback"
+          runbook: |
+            1. Monitor usage patterns: check prediction frequency
+            2. Review cache hit rate (should be >50%)
+            3. Consider implementing prediction request throttling
+            4. Verify bulk endpoints used (1 call = 13 indicators)
+      
+      - alert: TaapiDailyLimitExceeded
+        expr: taapi_rate_limit_remaining{limit_type="per_day"} < 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: rate_limiting
+          priority: P2
+        annotations:
+          summary: "TAAPI Pro daily rate limit critical"
+          description: "Remaining calls: {{ $value }} / 150,000"
+          impact: "Risk of exhausting daily quota, will force Binance fallback"
+          runbook: |
+            1. Calculate remaining hours in day
+            2. Estimate remaining requests needed
+            3. Implement aggressive throttling if quota insufficient
+            4. Consider upgrading TAAPI Pro plan if consistently hitting limit
+            5. Review cache strategy and TTL optimization
+      
+      # ========================================================================
+      # CACHE PERFORMANCE ALERTS
+      # ========================================================================
+      
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(taapi_cache_hits_total[5m]))
+          /
+          (sum(rate(taapi_cache_hits_total[5m])) + sum(rate(taapi_cache_misses_total[5m])))
+          < 0.30
+        for: 30m
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: performance
+          priority: P3
+        annotations:
+          summary: "TAAPI cache hit rate low"
+          description: "Cache hit rate: {{ $value | humanizePercentage }} (target: >50%)"
+          impact: "Excessive API calls, increased latency and costs"
+          runbook: |
+            1. Check cache TTL (should be 30s for snapshot data)
+            2. Verify cache implementation working correctly
+            3. Analyze request patterns - too diverse symbols?
+            4. Consider implementing tiered caching (hot symbols = longer TTL)
+            5. Review cache eviction policy
+      
+      # ========================================================================
+      # FALLBACK USAGE ALERTS
+      # ========================================================================
+      
+      - alert: HighFallbackRate
+        expr: taapi_fallback_rate > 0.20
+        for: 1h
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: reliability
+          priority: P2
+        annotations:
+          summary: "High TAAPI fallback rate"
+          description: "Fallback rate: {{ $value | humanizePercentage }} (threshold: 20%)"
+          impact: "Predictions using less accurate Binance-only data"
+          runbook: |
+            1. Check fallback reasons: 
+               grep "TAAPI fallback triggered" /var/log/claude-engine.log | tail -50
+            2. Common reasons:
+               - timeout: Check TAAPI latency
+               - error: Check TAAPI error rate
+               - rate_limit: Check quota remaining
+               - unavailable: Check TAAPI API status
+            3. If primarily timeouts, increase timeout threshold
+            4. If primarily errors, investigate API issues
+      
+      - alert: FallbackRateCritical
+        expr: taapi_fallback_rate > 0.50
+        for: 30m
+        labels:
+          severity: critical
+          service: claude-trader-engine
+          category: reliability
+          priority: P1
+        annotations:
+          summary: "CRITICAL: Majority of predictions using fallback"
+          description: "Fallback rate: {{ $value | humanizePercentage }} (>50%)"
+          impact: "TAAPI Pro integration effectively disabled, accuracy degraded"
+          runbook: |
+            IMMEDIATE ACTIONS:
+            1. Check TAAPI Pro API health: https://status.taapi.io
+            2. Verify network connectivity: curl -v https://api.taapi.io/health
+            3. Review API key validity and account status
+            4. If TAAPI outage, accept degraded performance until restored
+            5. If internal issue, investigate circuit breaker or timeout config
+            6. Page on-call if unresolved >1h
+      
+      # ========================================================================
+      # MULTI-TIMEFRAME ANALYSIS ALERTS
+      # ========================================================================
+      
+      - alert: HighTimeframeConflictRate
+        expr: taapi_timeframe_conflict_rate > 0.30
+        for: 6h
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: market_conditions
+          priority: P3
+        annotations:
+          summary: "High timeframe conflict rate"
+          description: "Conflict rate: {{ $value | humanizePercentage }} (threshold: 30%)"
+          impact: "Many predictions with conflicting timeframe signals (lower confidence)"
+          runbook: |
+            1. Check market conditions - high conflict normal during:
+               - Choppy/ranging markets
+               - High volatility events
+               - Major news announcements
+            2. Review accuracy of conflicting predictions specifically
+            3. If accuracy still good, no action needed (working as designed)
+            4. If accuracy poor for conflicts, consider:
+               - Adjusting timeframe weights
+               - Stricter conflict detection
+               - Not trading during high conflict periods
+      
+      - alert: FewFullyAlignedPredictions
+        expr: |
+          rate(taapi_timeframe_alignments_total{alignment_type="fully_aligned"}[6h])
+          /
+          rate(taapi_timeframe_alignments_total[6h])
+          < 0.20
+        for: 12h
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: market_conditions
+          priority: P3
+        annotations:
+          summary: "Low proportion of fully-aligned predictions"
+          description: "Fully aligned: {{ $value | humanizePercentage }} (typical: 30-40%)"
+          impact: "Fewer high-confidence predictions available"
+          runbook: |
+            1. Normal during choppy markets or trend reversals
+            2. Review overall accuracy - still meeting targets?
+            3. Check if partial alignments performing well
+            4. No action needed unless accuracy drops
+            5. Consider as market signal (uncertain conditions)
+      
+      # ========================================================================
+      # SYSTEM HEALTH ALERTS
+      # ========================================================================
+      
+      - alert: ClaudeEngineMemoryHigh
+        expr: |
+          (container_memory_usage_bytes{name="claude-trader-engine"}
+          /
+          container_spec_memory_limit_bytes{name="claude-trader-engine"})
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: resource
+          priority: P2
+        annotations:
+          summary: "Claude Engine memory usage high"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+          impact: "Risk of OOM kill, service restart"
+          runbook: |
+            1. Check prediction cache size (may be too large)
+            2. Review rolling metrics window (100 predictions default)
+            3. Check for memory leaks in metrics tracking
+            4. Consider increasing container memory limit
+            5. Review PredictionMetricsTracker._predictions dict size
+      
+      - alert: PredictionVolumeAnomalous
+        expr: |
+          abs(
+            rate(claude_predictions_total[5m])
+            -
+            avg_over_time(rate(claude_predictions_total[5m])[1h:5m])
+          ) > 
+          (2 * stddev_over_time(rate(claude_predictions_total[5m])[1h:5m]))
+        for: 15m
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: anomaly
+          priority: P3
+        annotations:
+          summary: "Prediction volume anomalous"
+          description: "Prediction rate deviates significantly from normal"
+          impact: "May indicate integration issue or unusual usage pattern"
+          runbook: |
+            1. Check if intentional (e.g., load testing, new feature)
+            2. Review API gateway logs for unusual traffic
+            3. Verify no runaway prediction loops
+            4. Check for DDoS or abuse
+            5. If spike, verify rate limits protecting resources
+            6. If drop, check if predictions failing silently

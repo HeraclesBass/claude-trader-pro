@@ -1,0 +1,51 @@
+# Prometheus Scrape Configuration for Claude Trader Pro
+# Add this to your main Prometheus configuration via file_sd_configs or include it directly
+
+scrape_configs:
+  # Claude Trader Engine (FastAPI Backend)
+  - job_name: 'claude-trader-engine'
+    static_configs:
+      - targets: ['claude-trader-engine:8108']
+        labels:
+          service: 'claude-trader-engine'
+          type: 'api'
+          category: 'application'
+          component: 'backend'
+          environment: 'production'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    # Retry on failure
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        
+  # Claude Trader API Gateway (Express.js)
+  - job_name: 'claude-trader-api-gateway'
+    static_configs:
+      - targets: ['claude-trader-api-gateway:8100']
+        labels:
+          service: 'claude-trader-api-gateway'
+          type: 'api-gateway'
+          category: 'application'
+          component: 'middleware'
+          environment: 'production'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Optional: Frontend metrics (if you add client-side monitoring)
+  # - job_name: 'claude-trader-frontend'
+  #   static_configs:
+  #     - targets: ['claude-trader-frontend:3000']
+  #       labels:
+  #         service: 'claude-trader-frontend'
+  #         type: 'web'
+  #         category: 'application'
+  #         component: 'frontend'
+  #         environment: 'production'
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 30s

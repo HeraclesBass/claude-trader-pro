@@ -1,0 +1,210 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  claude-trader-postgres:
+    image: postgres:15-alpine
+    container_name: claude-trader-postgres
+    environment:
+      POSTGRES_USER: hercules
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-postgres-password-here}
+      POSTGRES_DB: hercules_db
+    ports:
+      - "15433:5432"
+    volumes:
+      - claude-trader-postgres-data:/var/lib/postgresql/data
+      - ../backend/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - claude-trader-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-postgres,environment=production"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hercules -d hercules_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  claude-trader-frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.simple
+    container_name: claude-trader-frontend
+    ports:
+      - "8106:3000"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:8100/api
+      - REACT_APP_WS_URL=ws://localhost:8100
+    depends_on:
+      - claude-trader-engine
+    networks:
+      - claude-trader-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-frontend,environment=production"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  claude-trader-api-gateway:
+    build:
+      context: ../backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: claude-trader-api-gateway
+    ports:
+      - "8100:8100"
+    env_file:
+      - ../.env
+    environment:
+      - NODE_ENV=production
+      - PORT=8100
+      - CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
+      # Database config (API Gateway uses DB_* naming)
+      - DB_HOST=claude-trader-postgres
+      - DB_PORT=5432
+      - DB_NAME=hercules_db
+      - DB_USER=hercules
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-your-postgres-password-here}
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+    depends_on:
+      claude-trader-engine:
+        condition: service_healthy
+      claude-trader-postgres:
+        condition: service_healthy
+    networks:
+      - claude-trader-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-api-gateway,environment=production"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  claude-trader-engine:
+    build:
+      context: ../backend/claude-engine
+      dockerfile: Dockerfile
+    container_name: claude-trader-engine
+    ports:
+      - "8118:8108"
+    env_file:
+      - ../.env
+    environment:
+      - ENVIRONMENT=production
+      - PORT=8108
+      - POSTGRES_HOST=claude-trader-postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=hercules_db
+      - DATABASE_URL=postgresql://hercules:${POSTGRES_PASSWORD:-your-postgres-password-here}@claude-trader-postgres:5432/hercules_db
+      - UNIFIED_DATA_API_PATH=/app/external_data_api
+      - LOG_LEVEL=INFO
+      - PREDICTION_INTERVAL_MINUTES=2
+      # TAAPI Pro API key for multi-timeframe technical analysis
+      - TAAPI_API_KEY=${TAAPI_API_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbHVlIjoiNjkxMmIwNzg4MDZmZjE2NTFlYTY0MzJjIiwiaWF0IjoxNzYyODg3NTQwLCJleHAiOjMzMjY3MzUxNTQwfQ.R1ZGQmxGMItjAsbNvayZAcsRPHRazqmGbp6CFrpnzkU}
+      # Reddit API credentials for sentiment analysis
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:-5co9Mxt1LNQnloxCbKb29A}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:-FiPj1_Nm5f6SYDFMwLn93sdIc5jB0Q}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT:-ClaudeTrAIder-Sentiment:v1.0}
+      # AI Provider Configuration (claude or gemini)
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # OctoBot connection for trade tracking (connected via octobot_octobot-network)
+      - OCTOBOT_URL=http://octobot-user1:5001
+      - OCTOBOT_TIMEOUT=15
+      # FRED API key for macro economic data
+      - FRED_API_KEY=${FRED_API_KEY}
+      # Auto-execution settings
+      - AUTO_EXECUTE_ENABLED=true
+      - EXECUTION_CONFIDENCE_THRESHOLD=0.50
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /home/user/OctoBot/external-data-sources:/app/external_data_api:ro
+      - /home/user/OctoBot/tentacles/Evaluator/TA/claude_evaluator:/app/claude_evaluator:ro
+    depends_on:
+      claude-trader-postgres:
+        condition: service_healthy
+    networks:
+      - claude-trader-network
+      - octobot-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-engine,environment=production"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # OctoBot Paper Trading Engine
+  octobot-claude-trader:
+    image: drakkarsoftware/octobot:stable
+    container_name: octobot-claude-trader
+    ports:
+      - "8109:5001"
+    volumes:
+      - /home/user/OctoBot/user:/octobot/user
+      - /home/user/OctoBot/tentacles:/octobot/tentacles
+      - /home/user/OctoBot/logs:/octobot/logs
+    environment:
+      - OCTOBOT_PROFILE=claude_trader
+    command: ["python", "start.py", "--simulate"]
+    depends_on:
+      claude-trader-postgres:
+        condition: service_healthy
+    networks:
+      - claude-trader-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=octobot-claude-trader,environment=production"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  claude-trader-network:
+    driver: bridge
+  octobot-network:
+    external: true
+    name: octobot_octobot-network
+
+volumes:
+  claude-trader-postgres-data:
+    driver: local

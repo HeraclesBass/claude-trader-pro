@@ -1,0 +1,558 @@
+{
+  "dashboard": {
+    "title": "TAAPI Pro Enhancement - Prediction Monitoring",
+    "tags": ["claude-trader", "taapi", "predictions", "ml"],
+    "timezone": "utc",
+    "schemaVersion": 30,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Overall Prediction Accuracy (100-prediction window)",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "claude_prediction_accuracy{symbol=\"all\", alignment_type=\"all\"}",
+            "legendFormat": "Accuracy"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 0.70, "color": "yellow" },
+                { "value": 0.80, "color": "orange" },
+                { "value": 0.85, "color": "green" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Accuracy Target Progress",
+        "type": "gauge",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "claude_prediction_accuracy{symbol=\"all\", alignment_type=\"all\"}",
+            "legendFormat": "Current"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0.5,
+            "max": 1.0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0.5, "color": "red" },
+                { "value": 0.70, "color": "yellow" },
+                { "value": 0.80, "color": "orange" },
+                { "value": 0.85, "color": "green" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 3,
+        "title": "Predictions Tracked",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 0, "w": 3, "h": 2 },
+        "targets": [
+          {
+            "expr": "count(count_over_time(claude_predictions_total[24h]))",
+            "legendFormat": "24h"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": { "mode": "palette-classic" }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Validations (24h)",
+        "type": "stat",
+        "gridPos": { "x": 15, "y": 0, "w": 3, "h": 2 },
+        "targets": [
+          {
+            "expr": "sum(increase(claude_prediction_validations_total[24h]))",
+            "legendFormat": "Total"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 50, "color": "yellow" },
+                { "value": 100, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Fallback Rate (Last Hour)",
+        "type": "stat",
+        "gridPos": { "x": 18, "y": 0, "w": 3, "h": 2 },
+        "targets": [
+          {
+            "expr": "taapi_fallback_rate",
+            "legendFormat": "Fallback"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 0.10, "color": "yellow" },
+                { "value": 0.20, "color": "orange" },
+                { "value": 0.50, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "TAAPI Rate Limit",
+        "type": "stat",
+        "gridPos": { "x": 21, "y": 0, "w": 3, "h": 2 },
+        "targets": [
+          {
+            "expr": "taapi_rate_limit_remaining{limit_type=\"per_day\"}",
+            "legendFormat": "Per Day"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 10000, "color": "orange" },
+                { "value": 50000, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Accuracy Trend (24 hours)",
+        "type": "timeseries",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "claude_prediction_accuracy{symbol=\"all\", alignment_type=\"all\"}",
+            "legendFormat": "Overall Accuracy"
+          },
+          {
+            "expr": "0.85",
+            "legendFormat": "Target (85%)"
+          },
+          {
+            "expr": "0.80",
+            "legendFormat": "Warning Threshold"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0.5,
+            "max": 1.0,
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Target (85%)" },
+              "properties": [
+                { "id": "custom.lineStyle", "value": { "dash": [10, 10] } },
+                { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 8,
+        "title": "Accuracy by Alignment Type",
+        "type": "bargauge",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "claude_prediction_accuracy{alignment_type!=\"all\"}",
+            "legendFormat": "{{alignment_type}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0.5,
+            "max": 1.0,
+            "thresholds": {
+              "steps": [
+                { "value": 0.5, "color": "red" },
+                { "value": 0.75, "color": "yellow" },
+                { "value": 0.85, "color": "green" }
+              ]
+            }
+          }
+        },
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        }
+      },
+      {
+        "id": 9,
+        "title": "Confidence Calibration Heatmap",
+        "type": "table",
+        "gridPos": { "x": 0, "y": 10, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "claude_confidence_calibration_error",
+            "legendFormat": "{{confidence_bucket}}",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "color-background"
+            },
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 0.05, "color": "yellow" },
+                { "value": 0.10, "color": "orange" },
+                { "value": 0.15, "color": "red" }
+              ]
+            }
+          }
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": { "Time": true },
+              "renameByName": {
+                "confidence_bucket": "Confidence Bucket",
+                "Value": "Calibration Error"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Confidence Distribution",
+        "type": "histogram",
+        "gridPos": { "x": 12, "y": 10, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "rate(claude_prediction_confidence_bucket[5m])",
+            "legendFormat": "{{le}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "TAAPI API Latency (p50, p95, p99)",
+        "type": "timeseries",
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(taapi_api_latency_seconds_bucket[5m]))",
+            "legendFormat": "p50"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(taapi_api_latency_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(taapi_api_latency_seconds_bucket[5m]))",
+            "legendFormat": "p99"
+          },
+          {
+            "expr": "8",
+            "legendFormat": "Target (8s)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Target (8s)" },
+              "properties": [
+                { "id": "custom.lineStyle", "value": { "dash": [10, 10] } },
+                { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 12,
+        "title": "TAAPI API Success Rate",
+        "type": "timeseries",
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "sum(rate(taapi_api_calls_total{status=\"success\"}[5m])) / sum(rate(taapi_api_calls_total[5m]))",
+            "legendFormat": "Success Rate"
+          },
+          {
+            "expr": "0.95",
+            "legendFormat": "Target (95%)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0.8,
+            "max": 1.0,
+            "custom": {
+              "drawStyle": "line",
+              "fillOpacity": 20
+            }
+          }
+        }
+      },
+      {
+        "id": 13,
+        "title": "Cache Hit Rate",
+        "type": "gauge",
+        "gridPos": { "x": 0, "y": 22, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(taapi_cache_hits_total[5m])) / (sum(rate(taapi_cache_hits_total[5m])) + sum(rate(taapi_cache_misses_total[5m])))",
+            "legendFormat": "Hit Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 0.30, "color": "yellow" },
+                { "value": 0.50, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "Fallback Reasons (24h)",
+        "type": "piechart",
+        "gridPos": { "x": 6, "y": 22, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(increase(taapi_fallback_usage_total[24h])) by (reason)",
+            "legendFormat": "{{reason}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right"
+          }
+        }
+      },
+      {
+        "id": 15,
+        "title": "Timeframe Alignment Distribution",
+        "type": "piechart",
+        "gridPos": { "x": 12, "y": 22, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(taapi_timeframe_alignments_total[1h])) by (alignment_type)",
+            "legendFormat": "{{alignment_type}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right"
+          }
+        }
+      },
+      {
+        "id": 16,
+        "title": "Conflict Rate Trend",
+        "type": "timeseries",
+        "gridPos": { "x": 18, "y": 22, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "taapi_timeframe_conflict_rate",
+            "legendFormat": "Conflict Rate"
+          },
+          {
+            "expr": "0.30",
+            "legendFormat": "Alert Threshold (30%)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 0.5,
+            "custom": {
+              "drawStyle": "line",
+              "fillOpacity": 20
+            }
+          }
+        }
+      },
+      {
+        "id": 17,
+        "title": "Rate Limits Remaining",
+        "type": "timeseries",
+        "gridPos": { "x": 0, "y": 26, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "taapi_rate_limit_remaining{limit_type=\"per_minute\"}",
+            "legendFormat": "Per Minute (2400 max)"
+          },
+          {
+            "expr": "taapi_rate_limit_remaining{limit_type=\"per_day\"}",
+            "legendFormat": "Per Day (150,000 max)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "drawStyle": "line",
+              "axisPlacement": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Per Day (150,000 max)" },
+              "properties": [
+                { "id": "custom.axisPlacement", "value": "right" }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 18,
+        "title": "Prediction Volume (per hour)",
+        "type": "timeseries",
+        "gridPos": { "x": 12, "y": 26, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "rate(claude_predictions_total[1h])",
+            "legendFormat": "Predictions/hour"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "custom": {
+              "drawStyle": "bars",
+              "barAlignment": 0
+            }
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "name": "Deployments",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "changes(claude_engine_requests_total[5m]) > 0",
+          "iconColor": "blue",
+          "tagKeys": "deployment"
+        },
+        {
+          "name": "Alerts Firing",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\", job=\"claude-trader-engine\"}",
+          "iconColor": "red",
+          "tagKeys": "alertname"
+        }
+      ]
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "symbol",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(claude_prediction_accuracy, symbol)",
+          "multi": false,
+          "includeAll": true,
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          }
+        }
+      ]
+    }
+  }
+}

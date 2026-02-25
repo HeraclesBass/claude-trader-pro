@@ -1,0 +1,174 @@
+version: '3.8'
+
+# ClaudeTrader Pro - Production Docker Compose
+# Deployment Engineer - Hercules Platform
+
+services:
+  claude-trader-frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    image: claude-trader-frontend:latest
+    container_name: claude-trader-frontend
+    restart: unless-stopped
+    ports:
+      - "8100:3000"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=https://claude-trader.herakles.dev/api
+      - REACT_APP_WS_URL=wss://claude-trader.herakles.dev/ws
+    depends_on:
+      claude-trader-api-gateway:
+        condition: service_healthy
+    networks:
+      - claude-trader-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-frontend,environment=production,component=ui"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  claude-trader-api-gateway:
+    build:
+      context: ../backend/api-gateway
+      dockerfile: Dockerfile
+    image: claude-trader-api-gateway:latest
+    container_name: claude-trader-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    environment:
+      - NODE_ENV=production
+      - PORT=8100
+      - CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
+      - CLAUDE_ENGINE_TIMEOUT=120000
+      - CLAUDE_ENGINE_RETRIES=3
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=hercules_db
+      - POSTGRES_USER=hercules
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - LOG_LEVEL=info
+      - ALLOWED_ORIGINS=https://claude-trader.herakles.dev
+    depends_on:
+      claude-trader-engine:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - claude-trader-network
+      - hercules-platform_default
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-api-gateway,environment=production,component=api"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+
+  claude-trader-engine:
+    build:
+      context: ../backend/claude-engine
+      dockerfile: Dockerfile
+    image: claude-trader-engine:latest
+    container_name: claude-trader-engine
+    restart: unless-stopped
+    ports:
+      - "8108:8108"
+    environment:
+      - ENVIRONMENT=production
+      - PORT=8108
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=hercules_db
+      - POSTGRES_USER=hercules
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - UNIFIED_DATA_API_PATH=/app/external_data_api
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - /home/user/OctoBot/external-data-sources:/app/external_data_api:ro
+      - /home/user/OctoBot/tentacles/Evaluator/TA/claude_evaluator:/app/claude_evaluator:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - claude-trader-network
+      - hercules-platform_default
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
+        labels: "service=claude-trader-engine,environment=production,component=ai"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # PostgreSQL is external (hercules-platform_default network)
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    external_links:
+      - postgres
+    networks:
+      - hercules-platform_default
+
+networks:
+  claude-trader-network:
+    driver: bridge
+    name: claude-trader-network
+  hercules-platform_default:
+    external: true
+
+# External volumes
+volumes:
+  postgres-data:
+    external: true

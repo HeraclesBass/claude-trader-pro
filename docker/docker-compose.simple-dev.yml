@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # Claude Engine with Hot Reload (simpler setup)
+  claude-trader-engine-dev:
+    build:
+      context: ./backend/claude-engine
+      dockerfile: Dockerfile.dev
+    container_name: claude-trader-engine-dev
+    ports:
+      - "8108:8108"
+    volumes:
+      - ./backend/claude-engine/app:/app/app
+      - /home/user/OctoBot/external-data-sources:/app/external_data_sources:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATABASE_URL=postgresql://hercules:your-postgres-password-here@postgres:5432/hercules_db
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8108 --reload --reload-dir /app/app
+    networks:
+      - hercules-platform_default
+    restart: unless-stopped
+
+networks:
+  hercules-platform_default:
+    external: true

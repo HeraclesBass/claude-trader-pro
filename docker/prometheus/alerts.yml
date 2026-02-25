@@ -1,0 +1,155 @@
+groups:
+  - name: claude_trader_alerts
+    interval: 30s
+    rules:
+      # Service Availability Alerts
+      - alert: ClaudeTraderEngineDown
+        expr: up{job="claude-trader-engine"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: claude-trader-engine
+          category: availability
+        annotations:
+          summary: "Claude Trader Engine is down"
+          description: "The Claude Trader Engine service has been unavailable for more than 2 minutes."
+          runbook: "Check docker logs: docker logs claude-trader-engine"
+          
+      - alert: ClaudeTraderAPIGatewayDown
+        expr: up{job="claude-trader-api-gateway"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: claude-trader-api-gateway
+          category: availability
+        annotations:
+          summary: "Claude Trader API Gateway is down"
+          description: "The API Gateway service has been unavailable for more than 2 minutes."
+          runbook: "Check docker logs: docker logs claude-trader-api-gateway"
+
+      # High Error Rate Alerts
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{job=~"claude-trader-.*",status=~"5.."}[5m])
+            /
+            rate(http_requests_total{job=~"claude-trader-.*"}[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High error rate detected for {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook: "Check logs: /home/user/scripts/observability-cli/query-logs.sh {{ $labels.service }} error --since 1h"
+
+      # Claude API Performance Alerts
+      - alert: ClaudeAPIHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(claude_api_request_duration_seconds_bucket{job="claude-trader-engine"}[5m])
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: performance
+        annotations:
+          summary: "Claude API calls are slow"
+          description: "95th percentile latency is {{ $value | humanizeDuration }} (threshold: 3s)"
+          runbook: "Check Claude API status and request patterns"
+
+      # Cost Management Alerts
+      - alert: DailyCostExceeded
+        expr: |
+          increase(claude_api_cost_total_usd{job="claude-trader-engine"}[24h]) > 10
+        labels:
+          severity: warning
+          service: claude-trader-engine
+          category: cost
+        annotations:
+          summary: "Daily Claude API cost exceeded $10"
+          description: "Current 24h cost: ${{ $value | humanize }}"
+          runbook: "Review prediction frequency and model usage patterns"
+
+      # Database Performance Alerts
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95,
+            rate(db_query_duration_seconds_bucket{job=~"claude-trader-.*"}[5m])
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "Slow database queries detected for {{ $labels.job }}"
+          description: "95th percentile query time: {{ $value | humanizeDuration }}"
+          runbook: "Check database connection pool and query optimization"
+
+      # Request Rate Alerts
+      - alert: UnusualRequestRate
+        expr: |
+          abs(
+            rate(http_requests_total{job=~"claude-trader-.*"}[5m])
+            -
+            avg_over_time(rate(http_requests_total{job=~"claude-trader-.*"}[5m])[1h:5m])
+          ) > 
+          (
+            2 * stddev_over_time(rate(http_requests_total{job=~"claude-trader-.*"}[5m])[1h:5m])
+          )
+        for: 10m
+        labels:
+          severity: info
+          category: anomaly
+        annotations:
+          summary: "Unusual request rate for {{ $labels.job }}"
+          description: "Request rate deviates significantly from normal patterns"
+          runbook: "Investigate for potential DDoS or legitimate traffic spikes"
+
+      # Prediction Volume Alerts
+      - alert: LowPredictionVolume
+        expr: |
+          rate(claude_predictions_total{job="claude-trader-engine"}[1h]) < 1
+        for: 30m
+        labels:
+          severity: info
+          service: claude-trader-engine
+          category: business_metric
+        annotations:
+          summary: "Low prediction volume"
+          description: "Prediction rate: {{ $value | humanize }} per second (expected: >1/hour)"
+          runbook: "Check if trading engine is processing market data correctly"
+
+      # Memory Usage Alerts
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_usage_bytes{name=~"claude-trader-.*"}
+            /
+            container_spec_memory_limit_bytes{name=~"claude-trader-.*"}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High memory usage for {{ $labels.name }}"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+          runbook: "Consider increasing memory limits or investigating memory leaks"
+
+      # API Response Time Alerts
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket{job=~"claude-trader-.*"}[5m])
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High API response time for {{ $labels.job }}"
+          description: "95th percentile: {{ $value | humanizeDuration }} (threshold: 500ms)"
+          runbook: "Check application performance and database query times"
