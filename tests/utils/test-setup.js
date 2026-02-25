@@ -17,8 +17,8 @@ global.TEST_CONFIG = {
   DATABASE: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'hercules_db',
-    user: process.env.DB_USER || 'hercules',
+    database: process.env.DB_NAME || 'trader_db',
+    user: process.env.DB_USER || 'trader',
     password: process.env.DB_PASSWORD || 'your-password-here',
     schema: 'trading_predictions'
   },

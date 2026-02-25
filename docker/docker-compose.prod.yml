@@ -63,8 +63,8 @@ services:
       - CLAUDE_ENGINE_RETRIES=3
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=hercules_db
-      - POSTGRES_USER=hercules
+      - POSTGRES_DB=trader_db
+      - POSTGRES_USER=trader
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - RATE_LIMIT_WINDOW_MS=900000
       - RATE_LIMIT_MAX_REQUESTS=100
@@ -77,7 +77,7 @@ services:
         condition: service_healthy
     networks:
       - claude-trader-network
-      - hercules-platform_default
+      - claude-trader_default
     logging:
       driver: loki
       options:
@@ -115,8 +115,8 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=hercules_db
-      - POSTGRES_USER=hercules
+      - POSTGRES_DB=trader_db
+      - POSTGRES_USER=trader
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - UNIFIED_DATA_API_PATH=/app/external_data_api
       - LOG_LEVEL=INFO
@@ -129,7 +129,7 @@ services:
         condition: service_healthy
     networks:
       - claude-trader-network
-      - hercules-platform_default
+      - claude-trader_default
     logging:
       driver: loki
       options:
@@ -152,20 +152,20 @@ services:
           cpus: '1.0'
           memory: 1G
 
-  # PostgreSQL is external (hercules-platform_default network)
+  # PostgreSQL is external (claude-trader_default network)
   postgres:
     image: postgres:14-alpine
     container_name: postgres
     external_links:
       - postgres
     networks:
-      - hercules-platform_default
+      - claude-trader_default
 
 networks:
   claude-trader-network:
     driver: bridge
     name: claude-trader-network
-  hercules-platform_default:
+  claude-trader_default:
     external: true
 
 # External volumes

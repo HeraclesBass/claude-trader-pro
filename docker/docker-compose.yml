@@ -6,9 +6,9 @@ services:
     image: postgres:15-alpine
     container_name: claude-trader-postgres
     environment:
-      POSTGRES_USER: hercules
+      POSTGRES_USER: trader
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-postgres-password-here}
-      POSTGRES_DB: hercules_db
+      POSTGRES_DB: trader_db
     ports:
       - "15433:5432"
     volumes:
@@ -25,7 +25,7 @@ services:
         labels: "service=claude-trader-postgres,environment=production"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hercules -d hercules_db"]
+      test: ["CMD-SHELL", "pg_isready -U trader -d trader_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,8 +76,8 @@ services:
       # Database config (API Gateway uses DB_* naming)
       - DB_HOST=claude-trader-postgres
       - DB_PORT=5432
-      - DB_NAME=hercules_db
-      - DB_USER=hercules
+      - DB_NAME=trader_db
+      - DB_USER=trader
       - DB_PASSWORD=${POSTGRES_PASSWORD:-your-postgres-password-here}
       - RATE_LIMIT_WINDOW_MS=900000
       - RATE_LIMIT_MAX_REQUESTS=100
@@ -117,17 +117,17 @@ services:
       - PORT=8000
       - POSTGRES_HOST=claude-trader-postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=hercules_db
-      - DATABASE_URL=postgresql://hercules:${POSTGRES_PASSWORD:-your-postgres-password-here}@claude-trader-postgres:5432/hercules_db
+      - POSTGRES_DB=trader_db
+      - DATABASE_URL=postgresql://trader:${POSTGRES_PASSWORD:-your-postgres-password-here}@claude-trader-postgres:5432/trader_db
       - UNIFIED_DATA_API_PATH=/app/external_data_api
       - LOG_LEVEL=INFO
       - PREDICTION_INTERVAL_MINUTES=2
       # TAAPI Pro API key for multi-timeframe technical analysis
-      - TAAPI_API_KEY=${TAAPI_API_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbHVlIjoiNjkxMmIwNzg4MDZmZjE2NTFlYTY0MzJjIiwiaWF0IjoxNzYyODg3NTQwLCJleHAiOjMzMjY3MzUxNTQwfQ.R1ZGQmxGMItjAsbNvayZAcsRPHRazqmGbp6CFrpnzkU}
+      - TAAPI_API_KEY=${TAAPI_API_KEY:?TAAPI_API_KEY is required}
       # Reddit API credentials for sentiment analysis
-      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:-5co9Mxt1LNQnloxCbKb29A}
-      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:-FiPj1_Nm5f6SYDFMwLn93sdIc5jB0Q}
-      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT:-ClaudeTrAIder-Sentiment:v1.0}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:?REDDIT_CLIENT_ID is required}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:?REDDIT_CLIENT_SECRET is required}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT:-claude-trader-pro/1.0}
       # AI Provider Configuration (claude or gemini)
       - AI_PROVIDER=${AI_PROVIDER:-gemini}
       - GEMINI_API_KEY=${GEMINI_API_KEY}

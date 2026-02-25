@@ -291,8 +291,8 @@ class DatabaseConfig:
     # Default connection parameters
     DEFAULT_HOST = os.getenv('POSTGRES_HOST', 'postgres')
     DEFAULT_PORT = int(os.getenv('POSTGRES_PORT', '5432'))
-    DEFAULT_USER = os.getenv('POSTGRES_USER', 'hercules')
-    DEFAULT_DATABASE = os.getenv('POSTGRES_DB', 'hercules_db')
+    DEFAULT_USER = os.getenv('POSTGRES_USER', 'trader')
+    DEFAULT_DATABASE = os.getenv('POSTGRES_DB', 'trader_db')
     # NO DEFAULT PASSWORD - must be set via environment variable
 
     @classmethod
@@ -310,9 +310,9 @@ class DatabaseConfig:
         Args:
             host: Database host (default: postgres)
             port: Database port (default: 5432)
-            user: Database user (default: hercules)
+            user: Database user (default: trader)
             password: Database password (REQUIRED from env)
-            database: Database name (default: hercules_db)
+            database: Database name (default: trader_db)
 
         Returns:
             PostgreSQL connection string

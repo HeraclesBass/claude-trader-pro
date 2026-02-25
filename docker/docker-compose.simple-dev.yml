@@ -14,13 +14,13 @@ services:
       - /home/user/OctoBot/external-data-sources:/app/external_data_sources:ro
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - DATABASE_URL=postgresql://hercules:your-postgres-password-here@postgres:5432/hercules_db
+      - DATABASE_URL=postgresql://trader:your-postgres-password-here@postgres:5432/trader_db
       - PYTHONUNBUFFERED=1
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app
     networks:
-      - hercules-platform_default
+      - claude-trader_default
     restart: unless-stopped
 
 networks:
-  hercules-platform_default:
+  claude-trader_default:
     external: true

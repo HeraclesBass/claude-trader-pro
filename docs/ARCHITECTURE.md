@@ -185,8 +185,8 @@ PORT=3001
 CLAUDE_ENGINE_URL=http://claude-trader-engine:8000
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-POSTGRES_DB=hercules_db
-POSTGRES_USER=hercules
+POSTGRES_DB=trader_db
+POSTGRES_USER=trader
 POSTGRES_PASSWORD=your-password-here
 ```
 
@@ -642,14 +642,14 @@ WebSocket broadcasts to all connected clients
 Container: claude-trader-gateway
 Image: Built from /backend/api-gateway/Dockerfile
 Port: 0.0.0.0:3001->3001/tcp
-Network: hercules-platform_default
+Network: claude-trader_default
 Status: Up, Healthy
 
 # Claude Engine
 Container: claude-trader-engine
 Image: Built from /backend/claude-engine/Dockerfile
 Port: 0.0.0.0:8000->8000/tcp
-Network: hercules-platform_default
+Network: claude-trader_default
 Status: Up, Healthy
 ```
 
@@ -681,7 +681,7 @@ sudo cp -r dist/* /var/www/your-domain/
 # .env (production)
 NODE_ENV=production
 ANTHROPIC_API_KEY=your-anthropic-api-key-here
-DATABASE_URL=postgresql://hercules:your-password-here@postgres:5432/hercules_db
+DATABASE_URL=postgresql://trader:your-password-here@postgres:5432/trader_db
 CLAUDE_ENGINE_URL=http://claude-trader-engine:8000
 ```
 

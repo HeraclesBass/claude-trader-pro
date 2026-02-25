@@ -21,8 +21,8 @@ from decimal import Decimal
 DB_CONFIG = {
     'host': 'localhost',
     'port': 5432,
-    'database': 'hercules_db',
-    'user': 'hercules',
+    'database': 'trader_db',
+    ''user': 'trader',
     'password': 'your-password-here',
     'schema': 'trading_predictions'
 }
