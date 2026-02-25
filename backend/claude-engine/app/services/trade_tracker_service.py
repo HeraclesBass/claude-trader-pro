@@ -53,7 +53,7 @@ TRADE_TRACKER_LATENCY = Histogram(
 )
 
 # Configuration
-OCTOBOT_URL = os.getenv('OCTOBOT_URL', 'http://localhost:8110')
+OCTOBOT_URL = os.getenv('OCTOBOT_URL', 'http://localhost:5001')
 POLL_INTERVAL_SECONDS = int(os.getenv('TRADE_POLL_INTERVAL', '30'))
 HTTP_TIMEOUT = int(os.getenv('OCTOBOT_TIMEOUT', '10'))
 

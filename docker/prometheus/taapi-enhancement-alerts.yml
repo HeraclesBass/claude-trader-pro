@@ -20,7 +20,7 @@ groups:
           impact: "User trust degraded, trading decisions less reliable"
           runbook: |
             1. Check recent predictions: /home/user/scripts/observability-cli/query-logs.sh claude-trader-engine "Prediction validated" --since 1h
-            2. Verify TAAPI Pro data quality: curl localhost:8108/api/v1/health
+            2. Verify TAAPI Pro data quality: curl localhost:8000/api/v1/health
             3. Review confidence calibration metrics
             4. Check for market regime changes (high volatility, news events)
             5. If <70% for >2h, consider disabling predictions
@@ -85,7 +85,7 @@ groups:
           description: "Calibration error: {{ $value | humanize }} (threshold: 0.10)"
           impact: "Confidence scores not reflecting actual accuracy"
           runbook: |
-            1. Review confidence calibration: curl localhost:8108/api/v1/metrics/calibration
+            1. Review confidence calibration: curl localhost:8000/api/v1/metrics/calibration
             2. Check if specific confidence buckets are miscalibrated
             3. Collect 300+ validated predictions for recalibration
             4. Run confidence recalibration script (task-07 in session spec)

@@ -1,7 +1,7 @@
 /**
  * ClaudeTrader Pro API Gateway
  * Express.js server with WebSocket support
- * Port: 8100
+ * Port: 3001
  */
 
 const express = require('express');

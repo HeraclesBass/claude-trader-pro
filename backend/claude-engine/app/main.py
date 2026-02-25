@@ -2,7 +2,7 @@
 Claude Decision Engine - FastAPI Application
 Production-ready service for AI-powered crypto trading predictions
 
-Port: 8108
+Port: 8000
 Database: PostgreSQL (trading_predictions schema)
 AI: Anthropic Claude 3.5 Haiku
 Data Source: Unified Crypto Data API
@@ -136,7 +136,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to start scheduler: {e}")
         logger.warning("Continuing without automated predictions - use manual trigger endpoint")
     
-    logger.info("Claude Decision Engine started successfully on port 8108")
+    logger.info("Claude Decision Engine started successfully on port 8000")
     
     yield
     
@@ -276,7 +276,7 @@ async def root():
         "service": "Claude Decision Engine",
         "version": "1.0.0",
         "status": "operational",
-        "port": 8108,
+        "port": 8000,
         "model": "claude-sonnet-4-20250514",
         "endpoints": {
             "predict": "/api/v1/predict",
@@ -345,7 +345,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8108,
+        port=8000,
         reload=False,  # Production: disable reload
         log_level="info"
     )

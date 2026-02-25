@@ -11,7 +11,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://claude-trader.herakles.dev';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://your-domain.example.com';
 
 test.describe('Dashboard - Page Load', () => {
   test('Dashboard loads successfully', async ({ page }) => {
@@ -267,7 +267,7 @@ test.describe('Dashboard - Navigation', () => {
         
         // Should still be on same domain
         const url = page.url();
-        expect(url).toContain('herakles.dev');
+        expect(url).toContain('example.com');
       }
     }
   });

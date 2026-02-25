@@ -24,7 +24,7 @@ module.exports = defineConfig({
   
   // Shared settings
   use: {
-    baseURL: process.env.FRONTEND_URL || 'https://claude-trader.herakles.dev',
+    baseURL: process.env.FRONTEND_URL || 'https://your-domain.example.com',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

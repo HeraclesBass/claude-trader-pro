@@ -401,7 +401,7 @@ router.get('/console/token', asyncHandler(async (req, res) => {
       token,
       expiresIn: 3600,
       usage: 'trader.connect(token)',
-      endpoint: 'wss://trade.herakles.dev/console'
+      endpoint: 'wss://api.your-domain.example.com/console'
     }, 'Console token generated'));
 
   } catch (error) {

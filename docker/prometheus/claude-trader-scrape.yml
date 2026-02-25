@@ -5,7 +5,7 @@ scrape_configs:
   # Claude Trader Engine (FastAPI Backend)
   - job_name: 'claude-trader-engine'
     static_configs:
-      - targets: ['claude-trader-engine:8108']
+      - targets: ['claude-trader-engine:8000']
         labels:
           service: 'claude-trader-engine'
           type: 'api'
@@ -23,7 +23,7 @@ scrape_configs:
   # Claude Trader API Gateway (Express.js)
   - job_name: 'claude-trader-api-gateway'
     static_configs:
-      - targets: ['claude-trader-api-gateway:8100']
+      - targets: ['claude-trader-api-gateway:3001']
         labels:
           service: 'claude-trader-api-gateway'
           type: 'api-gateway'

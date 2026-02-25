@@ -39,8 +39,8 @@ services:
       - "8106:3000"
     environment:
       - NODE_ENV=production
-      - REACT_APP_API_URL=http://localhost:8100/api
-      - REACT_APP_WS_URL=ws://localhost:8100
+      - REACT_APP_API_URL=http://localhost:3001/api
+      - REACT_APP_WS_URL=ws://localhost:3001
     depends_on:
       - claude-trader-engine
     networks:
@@ -66,13 +66,13 @@ services:
       dockerfile: Dockerfile
     container_name: claude-trader-api-gateway
     ports:
-      - "8100:8100"
+      - "3001:3001"
     env_file:
       - ../.env
     environment:
       - NODE_ENV=production
-      - PORT=8100
-      - CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
+      - PORT=3001
+      - CLAUDE_ENGINE_URL=http://claude-trader-engine:8000
       # Database config (API Gateway uses DB_* naming)
       - DB_HOST=claude-trader-postgres
       - DB_PORT=5432
@@ -97,7 +97,7 @@ services:
         labels: "service=claude-trader-api-gateway,environment=production"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8100/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -109,12 +109,12 @@ services:
       dockerfile: Dockerfile
     container_name: claude-trader-engine
     ports:
-      - "8118:8108"
+      - "8118:8000"
     env_file:
       - ../.env
     environment:
       - ENVIRONMENT=production
-      - PORT=8108
+      - PORT=8000
       - POSTGRES_HOST=claude-trader-postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=hercules_db
@@ -159,7 +159,7 @@ services:
         labels: "service=claude-trader-engine,environment=production"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

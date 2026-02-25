@@ -15,8 +15,8 @@ services:
       - ./frontend/index.html:/app/index.html:ro
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8100/api
-      - VITE_WS_URL=ws://localhost:8100
+      - VITE_API_URL=http://localhost:3001/api
+      - VITE_WS_URL=ws://localhost:3001
     command: npm run dev -- --host 0.0.0.0
     networks:
       - claude-trader-dev
@@ -28,14 +28,14 @@ services:
       dockerfile: Dockerfile.dev
     container_name: claude-trader-api-gateway-dev
     ports:
-      - "8100:8100"
+      - "3001:3001"
     volumes:
       - ./backend/api-gateway/src:/app/src:ro
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - PORT=8100
-      - CLAUDE_ENGINE_URL=http://claude-trader-engine-dev:8108
+      - PORT=3001
+      - CLAUDE_ENGINE_URL=http://claude-trader-engine-dev:8000
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=hercules_db
@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: claude-trader-engine-dev
     ports:
-      - "8108:8108"
+      - "8000:8000"
     volumes:
       - ./backend/claude-engine/app:/app/app:ro
       - /home/user/OctoBot/external-data-sources:/app/external_data_sources:ro
@@ -66,7 +66,7 @@ services:
       - DATABASE_URL=postgresql://hercules:your-postgres-password-here@postgres:5432/hercules_db
       - ENVIRONMENT=development
       - PYTHONUNBUFFERED=1
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8108 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - claude-trader-dev
       - hercules-platform_default

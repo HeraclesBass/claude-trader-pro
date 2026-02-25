@@ -14,11 +14,11 @@ services:
     container_name: claude-trader-frontend
     restart: unless-stopped
     ports:
-      - "8100:3000"
+      - "3001:3000"
     environment:
       - NODE_ENV=production
-      - REACT_APP_API_URL=https://claude-trader.herakles.dev/api
-      - REACT_APP_WS_URL=wss://claude-trader.herakles.dev/ws
+      - REACT_APP_API_URL=https://your-domain.example.com/api
+      - REACT_APP_WS_URL=wss://your-domain.example.com/ws
     depends_on:
       claude-trader-api-gateway:
         condition: service_healthy
@@ -54,11 +54,11 @@ services:
     container_name: claude-trader-api-gateway
     restart: unless-stopped
     ports:
-      - "8100:8100"
+      - "3001:3001"
     environment:
       - NODE_ENV=production
-      - PORT=8100
-      - CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
+      - PORT=3001
+      - CLAUDE_ENGINE_URL=http://claude-trader-engine:8000
       - CLAUDE_ENGINE_TIMEOUT=120000
       - CLAUDE_ENGINE_RETRIES=3
       - POSTGRES_HOST=postgres
@@ -69,7 +69,7 @@ services:
       - RATE_LIMIT_WINDOW_MS=900000
       - RATE_LIMIT_MAX_REQUESTS=100
       - LOG_LEVEL=info
-      - ALLOWED_ORIGINS=https://claude-trader.herakles.dev
+      - ALLOWED_ORIGINS=https://your-domain.example.com
     depends_on:
       claude-trader-engine:
         condition: service_healthy
@@ -86,7 +86,7 @@ services:
         loki-batch-size: "400"
         labels: "service=claude-trader-api-gateway,environment=production,component=api"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -108,10 +108,10 @@ services:
     container_name: claude-trader-engine
     restart: unless-stopped
     ports:
-      - "8108:8108"
+      - "8000:8000"
     environment:
       - ENVIRONMENT=production
-      - PORT=8108
+      - PORT=8000
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -138,7 +138,7 @@ services:
         loki-batch-size: "400"
         labels: "service=claude-trader-engine,environment=production,component=ai"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

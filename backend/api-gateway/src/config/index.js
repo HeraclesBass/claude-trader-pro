@@ -25,7 +25,7 @@ const config = {
     name: 'claude-trader-api-gateway',
     version: '1.0.0',
     env: process.env.NODE_ENV || 'development',
-    port: parseInt(process.env.PORT || '8100', 10)
+    port: parseInt(process.env.PORT || '3001', 10)
   },
 
   // Backend Services

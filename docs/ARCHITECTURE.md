@@ -85,7 +85,7 @@
                              │
                   ┌──────────▼────────────┐
                   │   Nginx Reverse Proxy │
-                  │   trade.herakles.dev  │
+                  │   api.your-domain.example.com  │
                   └──────────┬────────────┘
                              │
                   ┌──────────▼────────────┐
@@ -98,7 +98,7 @@
                              │
         ┌────────────────────▼─────────────────────┐
         │     API Gateway (Node.js/Express)       │
-        │     Port: 8100                            │
+        │     Port: 3001                            │
         │                                           │
         │  • Health checks                          │
         │  • Request routing                        │
@@ -113,7 +113,7 @@
                  │                  │
     ┌────────────▼────────────┐    │
     │  Claude Engine (Python)  │    │
-    │  Port: 8108              │    │
+    │  Port: 8000              │    │
     │                          │    │
     │  • FastAPI framework     │    │
     │  • Claude API client     │    │
@@ -154,8 +154,8 @@ External Services:
 ### 1. API Gateway (`claude-trader-gateway`)
 
 **Location:** `/home/user/claude-trader-pro/backend/api-gateway/`  
-**Port:** 8100  
-**Technology:** Node.js 18 + Express.js  
+**Port:** 3001
+**Technology:** Node.js 18 + Express.js
 **Container:** `claude-trader-gateway`
 
 #### Responsibilities
@@ -181,8 +181,8 @@ GET  /api/metrics                   // Prometheus metrics
 ```javascript
 // .env
 NODE_ENV=production
-PORT=8100
-CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
+PORT=3001
+CLAUDE_ENGINE_URL=http://claude-trader-engine:8000
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_DB=hercules_db
@@ -217,8 +217,8 @@ POSTGRES_PASSWORD=your-password-here
 ### 2. Claude Engine (`claude-trader-engine`)
 
 **Location:** `/home/user/claude-trader-pro/backend/claude-engine/`  
-**Port:** 8108  
-**Technology:** Python 3.11 + FastAPI  
+**Port:** 8000
+**Technology:** Python 3.11 + FastAPI
 **Container:** `claude-trader-engine`
 
 #### Responsibilities
@@ -331,9 +331,9 @@ CREATE INDEX idx_predictions_type ON trading_predictions(prediction_type);
 ### 3. Frontend (React SPA)
 
 **Location:** `/home/user/claude-trader-pro/frontend/`  
-**Deployed:** `/var/www/trade.herakles.dev/`  
-**Technology:** React 18 + Vite + TailwindCSS  
-**Public URL:** `https://trade.herakles.dev`
+**Deployed:** `/var/www/your-domain/`
+**Technology:** React 18 + Vite + TailwindCSS
+**Public URL:** `https://your-domain.example.com`
 
 #### Architecture
 ```
@@ -632,7 +632,7 @@ WebSocket broadcasts to all connected clients
 
 **Infrastructure:**
 - Docker containers managed by Docker Compose
-- Nginx reverse proxy (port 443 → 8100)
+- Nginx reverse proxy (port 443 → 3001)
 - Cloudflare Tunnel for external access
 - PostgreSQL database (existing Hercules platform instance)
 
@@ -641,14 +641,14 @@ WebSocket broadcasts to all connected clients
 # API Gateway
 Container: claude-trader-gateway
 Image: Built from /backend/api-gateway/Dockerfile
-Port: 0.0.0.0:8100->8100/tcp
+Port: 0.0.0.0:3001->3001/tcp
 Network: hercules-platform_default
 Status: Up, Healthy
 
 # Claude Engine
 Container: claude-trader-engine
 Image: Built from /backend/claude-engine/Dockerfile
-Port: 0.0.0.0:8108->8108/tcp
+Port: 0.0.0.0:8000->8000/tcp
 Network: hercules-platform_default
 Status: Up, Healthy
 ```
@@ -672,8 +672,8 @@ docker restart claude-trader-engine
 # Deploy frontend
 cd /home/user/claude-trader-pro/frontend
 npm run build
-sudo rm -rf /var/www/trade.herakles.dev/*
-sudo cp -r dist/* /var/www/trade.herakles.dev/
+sudo rm -rf /var/www/your-domain/*
+sudo cp -r dist/* /var/www/your-domain/
 ```
 
 **Environment Variables:**
@@ -682,7 +682,7 @@ sudo cp -r dist/* /var/www/trade.herakles.dev/
 NODE_ENV=production
 ANTHROPIC_API_KEY=your-anthropic-api-key-here
 DATABASE_URL=postgresql://hercules:your-password-here@postgres:5432/hercules_db
-CLAUDE_ENGINE_URL=http://claude-trader-engine:8108
+CLAUDE_ENGINE_URL=http://claude-trader-engine:8000
 ```
 
 ### Hot Reload Development
@@ -701,14 +701,14 @@ docker-compose -f docker-compose.simple-dev.yml up -d
 ## 📈 Monitoring & Observability
 
 ### Health Checks
-- **API Gateway:** `curl http://localhost:8100/api/health`
-- **Claude Engine:** `curl http://localhost:8108/api/v1/health`
-- **Frontend:** `curl https://trade.herakles.dev/`
+- **API Gateway:** `curl http://localhost:3001/api/health`
+- **Claude Engine:** `curl http://localhost:8000/api/v1/health`
+- **Frontend:** `curl https://your-domain.example.com/`
 
 ### Metrics
 - **Prometheus endpoints:**
-  - API Gateway: `http://localhost:8100/api/metrics`
-  - Claude Engine: `http://localhost:8108/metrics`
+  - API Gateway: `http://localhost:3001/api/metrics`
+  - Claude Engine: `http://localhost:8000/metrics`
 
 ### Logging
 - **Structured JSON logs** sent to Loki
@@ -794,10 +794,10 @@ print(result)
 docker ps --filter "name=claude-trader"
 
 # Check API Gateway health
-curl -s http://localhost:8100/api/health | jq '.'
+curl -s http://localhost:3001/api/health | jq '.'
 
 # Check Claude Engine health
-curl -s http://localhost:8108/api/v1/health | jq '.'
+curl -s http://localhost:8000/api/v1/health | jq '.'
 
 # Check database connection
 docker exec claude-trader-engine python -c "
@@ -834,11 +834,11 @@ print('Claude API: OK')
 
 | Service | Status | Port | Health Endpoint |
 |---------|--------|------|-----------------|
-| Frontend | ✅ Online | 443 (HTTPS) | `https://trade.herakles.dev/` |
-| API Gateway | ✅ Online | 8100 | `/api/health` |
-| Claude Engine | ✅ Online | 8108 | `/api/v1/health` |
+| Frontend | ✅ Online | 443 (HTTPS) | `https://your-domain.example.com/` |
+| API Gateway | ✅ Online | 3001 | `/api/health` |
+| Claude Engine | ✅ Online | 8000 | `/api/v1/health` |
 | PostgreSQL | ✅ Connected | 5432 | N/A |
-| WebSocket | ✅ Active | 8100 | `/api/websocket/stats` |
+| WebSocket | ✅ Active | 3001 | `/api/websocket/stats` |
 
 **Fixed Issues:**
 1. ✅ Frontend React Query data envelope unwrapping

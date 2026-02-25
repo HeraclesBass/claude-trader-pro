@@ -48,8 +48,8 @@ export const options = {
 };
 
 // Test URLs
-const API_GATEWAY_URL = __ENV.API_GATEWAY_URL || 'http://localhost:8100';
-const CLAUDE_ENGINE_URL = __ENV.CLAUDE_ENGINE_URL || 'http://localhost:8108';
+const API_GATEWAY_URL = __ENV.API_GATEWAY_URL || 'http://localhost:3001';
+const CLAUDE_ENGINE_URL = __ENV.CLAUDE_ENGINE_URL || 'http://localhost:8000';
 
 export default function () {
   // Test 1: Health check (lightweight)

@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 const WebSocketContext = createContext(null);
 
-const WEBSOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:8100';
+const WEBSOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:3001';
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000]; // Exponential backoff
 
 export function WebSocketProvider({ children }) {

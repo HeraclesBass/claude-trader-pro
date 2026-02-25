@@ -9,10 +9,10 @@ jest.setTimeout(30000);
 
 // Global test configuration
 global.TEST_CONFIG = {
-  API_GATEWAY_URL: process.env.API_GATEWAY_URL || 'http://localhost:8100',
-  CLAUDE_ENGINE_URL: process.env.CLAUDE_ENGINE_URL || 'http://localhost:8108',
-  FRONTEND_URL: process.env.FRONTEND_URL || 'https://claude-trader.herakles.dev',
-  WS_URL: process.env.WS_URL || 'http://localhost:8100',
+  API_GATEWAY_URL: process.env.API_GATEWAY_URL || 'http://localhost:3001',
+  CLAUDE_ENGINE_URL: process.env.CLAUDE_ENGINE_URL || 'http://localhost:8000',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'https://your-domain.example.com',
+  WS_URL: process.env.WS_URL || 'http://localhost:3001',
   
   DATABASE: {
     host: process.env.DB_HOST || 'localhost',

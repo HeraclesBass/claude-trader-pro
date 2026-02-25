@@ -163,7 +163,7 @@ if (dbPool) {
 }
 
 // Start server
-const PORT = process.env.PORT || 8100;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`API Gateway running on port ${PORT}`);
   console.log(`Metrics available at http://localhost:${PORT}/metrics`);

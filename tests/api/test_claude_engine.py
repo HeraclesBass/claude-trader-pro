@@ -16,7 +16,7 @@ import asyncio
 from typing import Dict, Any
 
 # Test configuration
-CLAUDE_ENGINE_URL = "http://localhost:8108"
+CLAUDE_ENGINE_URL = "http://localhost:8000"
 TIMEOUT = 30.0
 
 

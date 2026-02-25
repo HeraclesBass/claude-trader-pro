@@ -365,7 +365,7 @@ function Settings() {
               API Base URL
             </label>
             <div className="input-field bg-gray-900 cursor-not-allowed">
-              {config?.api_url || 'http://localhost:8100/api'}
+              {config?.api_url || 'http://localhost:3001/api'}
             </div>
           </div>
 
@@ -374,7 +374,7 @@ function Settings() {
               WebSocket URL
             </label>
             <div className="input-field bg-gray-900 cursor-not-allowed">
-              {config?.ws_url || 'http://localhost:8100'}
+              {config?.ws_url || 'http://localhost:3001'}
             </div>
           </div>
 

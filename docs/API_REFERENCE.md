@@ -1,6 +1,6 @@
 # ClaudeTrader Pro - API Reference
 
-**Base URL:** `https://trade.herakles.dev/api`
+**Base URL:** `https://api.your-domain.example.com/api`
 **Authentication:** Authelia SSO (session-based)
 
 All responses follow this structure:
@@ -23,7 +23,7 @@ System health check with component status.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/health
+curl https://api.your-domain.example.com/api/health
 ```
 
 **Response:**
@@ -51,7 +51,7 @@ Detailed system status with memory and connection info.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/status
+curl https://api.your-domain.example.com/api/status
 ```
 
 **Response:**
@@ -93,7 +93,7 @@ Get all cached market data for supported cryptocurrencies.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/market/cached
+curl https://api.your-domain.example.com/api/market/cached
 ```
 
 **Response:**
@@ -143,7 +143,7 @@ Get the Fear & Greed Index from Alternative.me.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/sentiment/fear-greed
+curl https://api.your-domain.example.com/api/sentiment/fear-greed
 ```
 
 **Response:**
@@ -165,7 +165,7 @@ Get comprehensive market sentiment with 7-day trend.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/sentiment/market
+curl https://api.your-domain.example.com/api/sentiment/market
 ```
 
 **Response:**
@@ -206,7 +206,7 @@ Check OctoBot signal service status.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/signals/health
+curl https://api.your-domain.example.com/api/signals/health
 ```
 
 **Response:**
@@ -229,7 +229,7 @@ Get the latest trading signal for a symbol.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/signals/latest?symbol=BTC/USDT"
+curl "https://api.your-domain.example.com/api/signals/latest?symbol=BTC/USDT"
 ```
 
 **Query Parameters:**
@@ -265,7 +265,7 @@ Get trade performance statistics.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/trades/statistics?days=30"
+curl "https://api.your-domain.example.com/api/trades/statistics?days=30"
 ```
 
 **Query Parameters:**
@@ -298,7 +298,7 @@ Get recent trade history.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/trades/recent?limit=10&status=closed"
+curl "https://api.your-domain.example.com/api/trades/recent?limit=10&status=closed"
 ```
 
 **Query Parameters:**
@@ -345,7 +345,7 @@ List predictions with pagination.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/predictions?limit=10&symbol=BTC"
+curl "https://api.your-domain.example.com/api/predictions?limit=10&symbol=BTC"
 ```
 
 **Query Parameters:**
@@ -387,7 +387,7 @@ Get the most recent prediction.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/predictions/latest?symbol=BTC"
+curl "https://api.your-domain.example.com/api/predictions/latest?symbol=BTC"
 ```
 
 **Response:**
@@ -414,7 +414,7 @@ Trigger a new prediction for a symbol.
 
 **Request:**
 ```bash
-curl -X POST "https://trade.herakles.dev/api/predict/BTC" \
+curl -X POST "https://api.your-domain.example.com/api/predict/BTC" \
   -H "Content-Type: application/json" \
   -d '{"time_horizon_hours": 4}'
 ```
@@ -446,7 +446,7 @@ Get the current 4-hour prediction cycle.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/automated/cycle/current
+curl https://api.your-domain.example.com/api/automated/cycle/current
 ```
 
 **Response:**
@@ -470,7 +470,7 @@ Get the latest trading decision from the 4-hour cycle.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/automated/decision/latest
+curl https://api.your-domain.example.com/api/automated/decision/latest
 ```
 
 **Response:**
@@ -494,7 +494,7 @@ Trigger a manual prediction cycle (rate limited).
 
 **Request:**
 ```bash
-curl -X POST https://trade.herakles.dev/api/automated/predict/now
+curl -X POST https://api.your-domain.example.com/api/automated/predict/now
 ```
 
 **Response:**
@@ -522,7 +522,7 @@ Get prediction accuracy metrics.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/analytics/accuracy?symbol=BTC&time_horizon_hours=4"
+curl "https://api.your-domain.example.com/api/analytics/accuracy?symbol=BTC&time_horizon_hours=4"
 ```
 
 **Response:**
@@ -549,7 +549,7 @@ Get Claude API cost tracking.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/analytics/costs?days=7"
+curl "https://api.your-domain.example.com/api/analytics/costs?days=7"
 ```
 
 **Response:**
@@ -574,7 +574,7 @@ Get prediction direction distribution.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/analytics/distribution
+curl https://api.your-domain.example.com/api/analytics/distribution
 ```
 
 **Response:**
@@ -596,7 +596,7 @@ Get daily prediction statistics.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/analytics/daily-stats?days=7"
+curl "https://api.your-domain.example.com/api/analytics/daily-stats?days=7"
 ```
 
 **Response:**
@@ -629,7 +629,7 @@ Execute a trading signal via OctoBot.
 
 **Request:**
 ```bash
-curl -X POST "https://trade.herakles.dev/api/v1/signals/execute" \
+curl -X POST "https://api.your-domain.example.com/api/v1/signals/execute" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "BTC/USDT", "direction": "buy", "confidence": 0.72}'
 ```
@@ -655,7 +655,7 @@ Check OctoBot container health.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/v1/signals/octobot/health
+curl https://api.your-domain.example.com/api/v1/signals/octobot/health
 ```
 
 **Response:**
@@ -675,7 +675,7 @@ Get paper trading portfolio from synced trades.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/v1/signals/octobot/portfolio
+curl https://api.your-domain.example.com/api/v1/signals/octobot/portfolio
 ```
 
 **Response:**
@@ -700,7 +700,7 @@ Get open orders from paper trading.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/v1/signals/octobot/orders
+curl https://api.your-domain.example.com/api/v1/signals/octobot/orders
 ```
 
 ### GET /v1/signals/octobot/orders/closed
@@ -708,7 +708,7 @@ Get closed orders with P&L.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/v1/signals/octobot/orders/closed
+curl https://api.your-domain.example.com/api/v1/signals/octobot/orders/closed
 ```
 
 ### POST /v1/signals/octobot/sync
@@ -716,7 +716,7 @@ Trigger manual sync from OctoBot to PostgreSQL.
 
 **Request:**
 ```bash
-curl -X POST https://trade.herakles.dev/api/v1/signals/octobot/sync
+curl -X POST https://api.your-domain.example.com/api/v1/signals/octobot/sync
 ```
 
 ---
@@ -728,7 +728,7 @@ Get backtest summary with key metrics.
 
 **Request:**
 ```bash
-curl "https://trade.herakles.dev/api/v1/backtest/summary?days=30"
+curl "https://api.your-domain.example.com/api/v1/backtest/summary?days=30"
 ```
 
 **Response:**
@@ -752,7 +752,7 @@ Get prediction accuracy by symbol.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/v1/backtest/accuracy
+curl https://api.your-domain.example.com/api/v1/backtest/accuracy
 ```
 
 **Response:**
@@ -773,7 +773,7 @@ Get confidence calibration data.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/v1/backtest/calibration
+curl https://api.your-domain.example.com/api/v1/backtest/calibration
 ```
 
 ---
@@ -785,7 +785,7 @@ Get Risk of Ruin from trading history.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/trades/risk/ruin
+curl https://api.your-domain.example.com/api/trades/risk/ruin
 ```
 
 **Response:**
@@ -807,7 +807,7 @@ Monte Carlo Risk of Ruin calculation.
 
 **Request:**
 ```bash
-curl -X POST "https://trade.herakles.dev/api/trades/risk/ruin-calculator" \
+curl -X POST "https://api.your-domain.example.com/api/trades/risk/ruin-calculator" \
   -H "Content-Type: application/json" \
   -d '{"win_rate": 0.65, "avg_win": 100, "avg_loss": 80, "starting_capital": 10000}'
 ```
@@ -817,7 +817,7 @@ Get portfolio concentration risk analysis.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/trades/risk/concentration
+curl https://api.your-domain.example.com/api/trades/risk/concentration
 ```
 
 **Response:**
@@ -848,7 +848,7 @@ Get WebSocket connection statistics.
 
 **Request:**
 ```bash
-curl https://trade.herakles.dev/api/websocket/stats
+curl https://api.your-domain.example.com/api/websocket/stats
 ```
 
 **Response:**
@@ -916,7 +916,7 @@ All errors follow this format:
 
 ## WebSocket Events
 
-Connect to `wss://trade.herakles.dev/socket.io/`
+Connect to `wss://api.your-domain.example.com/socket.io/`
 
 **Events:**
 
