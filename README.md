@@ -81,3 +81,7 @@ tests/                  # Python + JS test suites across all layers
 
 - [Architecture](docs/ARCHITECTURE.md) — System design, data flow, deployment topology
 - [API Reference](docs/API_REFERENCE.md) — REST endpoints, WebSocket events, request/response schemas
+
+---
+
+Built by [D. Michael Piscitelli](https://github.com/HeraclesBass) | [herakles.dev](https://herakles.dev)
